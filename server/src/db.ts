@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { Envelope, DBSchema } from './types';
+import { Envelope, DBSchema, SignatureStatus } from './types';
 
 export let DB: DBSchema = { envelopes: {}, users: {} };
 
@@ -25,16 +25,16 @@ export const markEnvelopeComplete = (envelopeId: string): void => {
   saveDB();
 };
 
-export const markSignatureComplete = (envelopeId: string, email: string): void => {
-  const changedSignature = DB.envelopes[envelopeId].signatures.find(
-    (signature) => signature.user.email === email
-  );
-  if (changedSignature) {
-    changedSignature.status = 'COMPLETE';
-    saveDB();
-    return;
-  }
-  console.error(`User ${email} doesn't have a signature on ${envelopeId}`);
+export const changeSignatureStatus = (envelopeId: string, email: string, signatureStatus: SignatureStatus): void => {
+  DB.envelopes[envelopeId].signatures = DB.envelopes[envelopeId].signatures.map(signature => {
+    if (signature.user.email === email) {
+      let s = signature;
+      s.status = signatureStatus;
+      return s;
+    }
+    return signature;
+  });
+  saveDB();
 };
 
 export const saveUserUUID = (UUID: string, email: string): void => {

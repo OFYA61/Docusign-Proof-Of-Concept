@@ -1,10 +1,13 @@
 import express from 'express';
+import crypto from 'crypto';
 import { makeEnvelope, sendEnvelope } from './send_envelope';
 import { Envelope, Signature, User } from './types';
 import { addEnvelope, DB, initDB } from './db';
+import { buildDocusignEventFromRequest, handleDocusignEvent } from './event_handler';
+import { DOCUSIGN_CONNECT_HMAC_KEY } from './constants';
 
 const port = 3000;
-const app = express().use(express.json());
+const app = express();//.use(express.json());
 
 app.get('/', async (_req, res) => {
   res.send('Poggers');
@@ -18,7 +21,7 @@ interface SendEnvelopeRequest {
   cc_users?: Array<{ email: string; name: string }>;
 }
 
-app.post('/send-envelope', async (req, res) => {
+app.post('/send-envelope', express.json(), async (req, res) => {
   const body = req.body as SendEnvelopeRequest;
   let signers = body.signers ?? [];
 
@@ -68,11 +71,67 @@ app.get('/sent-envelopes/:envelopeId', async (req, res) => {
   res.send(DB.envelopes[envelopeId]);
 });
 
-app.post('/webhook/docusign', async (req, res) => {
-  console.log('Received Webhook from DocuSign:');
-  console.log(JSON.stringify(req.body, null, 2));
-  res.sendStatus(200);
-});
+app.post('/webhook/docusign',
+  (
+    req,
+    res,
+    next,
+  ) => {
+    const data: Buffer[] = [];
+
+    req.on('data', (chunk: Buffer) => {
+      data.push(chunk);
+    });
+
+    req.on('end', () => {
+      const rawBody = Buffer.concat(data);
+
+      // Compute HMAC
+      const hmac = crypto.createHmac('sha256', DOCUSIGN_CONNECT_HMAC_KEY);
+      hmac.update(rawBody);
+      const bodyHash = hmac.digest('base64');
+
+      // Get signature from header
+      const docuSignSignature = req.header('x-docusign-signature-1');
+      if (!docuSignSignature) {
+        console.log('Missing signature');
+        res.status(400).send('Missing DocuSign signature header');
+        return;
+      }
+
+      // Constant-time comparison is safer to avoid timing attacks
+      const isValid = crypto.timingSafeEqual(
+        Buffer.from(bodyHash),
+        Buffer.from(docuSignSignature)
+      );
+
+      if (!isValid) {
+        console.log('Invalid signature');
+        res.status(403).send('Invalid signature');
+        return;
+      }
+
+      try {
+        req.body = JSON.parse(rawBody.toString('utf8'));
+      } catch (e) {
+        res.status(400).send('Invalid JSON');
+        return;
+      }
+      next();
+    });
+
+    req.on('error', (err: Error) => {
+      console.log(err);
+      res.status(400).send('Error reading body');
+    });
+  }
+  , async (req, res) => {
+    console.log('Got docusign webhook event');
+
+    res.sendStatus(200);
+    const docusignEvent = buildDocusignEventFromRequest(req.body);
+    handleDocusignEvent(docusignEvent);
+  });
 
 app.listen(port, '0.0.0.0', async () => {
   initDB();

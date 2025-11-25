@@ -12,7 +12,7 @@ export class User {
   }
 }
 
-export type SignatureStatus = 'PENDING' | 'COMPLETE';
+export type SignatureStatus = 'PENDING' | 'SENT' | 'DELIVERED' | 'OPENED' | 'COMPLETE';
 
 export class Signature {
   user: User;
@@ -41,4 +41,14 @@ export class Envelope {
 export interface DBSchema {
   envelopes: { [envelopeId: string]: Envelope };
   users: { [uuid: string]: string };
+}
+
+export type DocusignEventType = 'recipient-sent' | 'envelope-sent' | 'recipient-delivered' | 'recipient-completed' | 'envelope-completed';
+
+export interface DocusignEvent {
+  eventType: DocusignEventType,
+  eventData: {
+    userId: string | undefined,
+    envelopeId: string
+  }
 }
