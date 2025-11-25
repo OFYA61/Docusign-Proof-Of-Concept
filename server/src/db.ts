@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { Envelope, DBSchema } from './types.js';
+import { Envelope, DBSchema } from './types';
 
 export let DB: DBSchema = {};
 

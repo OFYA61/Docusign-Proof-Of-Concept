@@ -1,7 +1,7 @@
 import express from 'express';
-import { makeEnvelope, sendEnvelope } from './send_envelope.js';
-import { Envelope, Signature, User } from './types.js';
-import { addEnvelope, DB, initDB } from './db.js';
+import { makeEnvelope, sendEnvelope } from './send_envelope';
+import { Envelope, Signature, User } from './types';
+import { addEnvelope, DB, initDB } from './db';
 
 const port = 3000;
 const app = express().use(express.json());
@@ -10,7 +10,7 @@ app.get('/', async (_req, res) => {
   res.send('Poggers');
 });
 
-app.get('/callback', async (_req, _res) => {});
+app.get('/callback', async (_req, _res) => { });
 
 interface SendEnvelopeRequest {
   signers?: Array<{ email: string; name: string }>;

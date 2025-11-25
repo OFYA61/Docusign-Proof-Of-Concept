@@ -1,6 +1,6 @@
-import { DOCUSIGN_INTEGRATION_KEY, DOCUSIGN_USER_ID } from './constants.js';
+import { DOCUSIGN_INTEGRATION_KEY, DOCUSIGN_USER_ID } from './constants';
 import fs from 'fs';
-import { docusignClient } from './docusign_client.js';
+import { docusignClient } from './docusign_client';
 
 const ACCESS_TOKEN_LIFE = 60 * 60;
 const SCOPES = ['signature', 'impersonation'];

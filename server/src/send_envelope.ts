@@ -1,7 +1,7 @@
 import docusign_esign from 'docusign-esign';
-import { ensureAccessToken, ensureAccount } from './docusign_token_utils.js';
-import { docusignClient } from './docusign_client.js';
-import { User } from './types.js';
+import { ensureAccessToken, ensureAccount } from './docusign_token_utils';
+import { docusignClient } from './docusign_client';
+import { User } from './types';
 
 const docusign = docusign_esign as any;
 
