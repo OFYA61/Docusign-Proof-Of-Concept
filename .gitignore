@@ -3,6 +3,6 @@ dist/
 .env
 *.log
 .DS_Store
-DB.json
+./server/DB.json
 id_rsa
 id_rsa.pub

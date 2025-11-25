@@ -1,13 +1,16 @@
 import express from 'express';
 import crypto from 'crypto';
+import docusign from 'docusign-esign';
 import { makeEnvelope, sendEnvelope } from './send_envelope';
 import { Envelope, Signature, User } from './types';
 import { addEnvelope, DB, initDB } from './db';
 import { buildDocusignEventFromRequest, handleDocusignEvent } from './event_handler';
 import { DOCUSIGN_CONNECT_HMAC_KEY } from './constants';
+import { docusignClient } from './docusign_client';
+import { ensureAccessToken, ensureAccount } from './docusign_token_utils';
 
 const port = 3000;
-const app = express();//.use(express.json());
+const app = express();
 
 app.get('/', async (_req, res) => {
   res.send('Poggers');
@@ -69,6 +72,22 @@ app.get('/sent-envelopes', async (_req, res) => {
 app.get('/sent-envelopes/:envelopeId', async (req, res) => {
   const envelopeId = req.params.envelopeId;
   res.send(DB.envelopes[envelopeId]);
+});
+
+app.get('/sent-envelopes/:envelopeId/download-document', async (req, res) => {
+  const envelopeId = req.params.envelopeId;
+  const { accountId, basePath } = await ensureAccount();
+  const dsApiClient = docusignClient;
+  dsApiClient.setBasePath(basePath);
+  dsApiClient.addDefaultHeader('Authorization', 'Bearer ' + (await ensureAccessToken()));
+  let envelopesApi = new docusign.EnvelopesApi(dsApiClient);
+  const results = await envelopesApi.getDocument(
+    accountId,
+    envelopeId,
+    '1',
+    {}
+  );
+  res.send(results);
 });
 
 app.post('/webhook/docusign',
