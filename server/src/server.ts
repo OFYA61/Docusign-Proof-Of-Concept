@@ -13,6 +13,7 @@ app.get('/', async (_req, res) => {
 app.get('/callback', async (_req, _res) => { });
 
 interface SendEnvelopeRequest {
+  products?: Array<string>;
   signers?: Array<{ email: string; name: string }>;
   cc_users?: Array<{ email: string; name: string }>;
 }
@@ -28,19 +29,27 @@ app.post('/send-envelope', async (req, res) => {
     return;
   }
 
+  let products = body.products ?? [];
+  if (products.length === 0) {
+    res
+      .status(400)
+      .send('What the heck are you doing? There are no products provided here');
+    return;
+  }
+
   const cc_users = body.cc_users ?? [];
   const signerUsers = signers.map((user) => new User(user.email, user.name));
   const ccUsers = cc_users.map((user) => new User(user.email, user.name));
 
   let envelopeResponse;
   try {
-    envelopeResponse = await sendEnvelope('Sign the bloody PDF m8', signerUsers, ccUsers);
+    envelopeResponse = await sendEnvelope('Sign the bloody PDF m8', signerUsers, products, ccUsers);
   } catch (err) {
     console.error(
       'DocuSign error response:',
       (err as any).response && ((err as any).response.body || (err as any).response.data || (err as any).body)
     );
-    res.status(400).send(await makeEnvelope('some title', signerUsers, ccUsers));
+    res.send(makeEnvelope('lkdjf', signerUsers, products, ccUsers)).status(400);//.send(await makeEnvelope('some title', signerUsers, products, ccUsers));
     return;
   }
 
@@ -51,12 +60,12 @@ app.post('/send-envelope', async (req, res) => {
 });
 
 app.get('/sent-envelopes', async (_req, res) => {
-  res.send(DB);
+  res.send(DB.envelopes);
 });
 
 app.get('/sent-envelopes/:envelopeId', async (req, res) => {
   const envelopeId = req.params.envelopeId;
-  res.send(DB[envelopeId]);
+  res.send(DB.envelopes[envelopeId]);
 });
 
 app.post('/webhook/docusign', async (req, res) => {

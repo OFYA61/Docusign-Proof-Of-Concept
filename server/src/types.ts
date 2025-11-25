@@ -39,5 +39,6 @@ export class Envelope {
 }
 
 export interface DBSchema {
-  [envelopeId: string]: Envelope;
+  envelopes: { [envelopeId: string]: Envelope };
+  users: { [uuid: string]: string };
 }

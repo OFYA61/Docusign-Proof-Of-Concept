@@ -1,1 +1,29 @@
-{}
+{
+  "envelopes": {
+    "36971e41-a404-8cc5-81ac-9d7760b21955": {
+      "envelopeId": "36971e41-a404-8cc5-81ac-9d7760b21955",
+      "signatures": [
+        {
+          "user": {
+            "email": "ahamzaaydin@gmail.com",
+            "name": "Signer 1"
+          },
+          "status": "PENDING"
+        },
+        {
+          "user": {
+            "email": "hamza23nisan@gmail.com",
+            "name": "Signer 2"
+          },
+          "status": "PENDING"
+        }
+      ],
+      "status": "SENT"
+    }
+  },
+  "users": {
+    "7a0330c5-fda3-4dac-adf9-367c4794e4ab": "ahamzaaydin.py@gmail.com",
+    "74e35222-11d6-4ca6-96aa-f1c16ecc706d": "ahamzaaydin@gmail.com",
+    "c9826cbb-6f33-49d1-8623-002bdb7436f2": "hamza23nisan@gmail.com"
+  }
+}

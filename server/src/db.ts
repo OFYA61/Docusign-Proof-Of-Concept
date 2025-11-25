@@ -1,10 +1,14 @@
 import fs from 'fs';
 import { Envelope, DBSchema } from './types';
 
-export let DB: DBSchema = {};
+export let DB: DBSchema = { envelopes: {}, users: {} };
 
 export const initDB = async (): Promise<void> => {
-  DB = JSON.parse(fs.readFileSync('DB.json', 'utf8')) as DBSchema;
+  const data = JSON.parse(fs.readFileSync('DB.json', 'utf8'));
+  DB = {
+    envelopes: data.envelopes ?? {},
+    users: data.users ?? {}
+  };
 };
 
 const saveDB = async (): Promise<void> => {
@@ -12,17 +16,17 @@ const saveDB = async (): Promise<void> => {
 };
 
 export const addEnvelope = (envelope: Envelope): void => {
-  DB[envelope.envelopeId] = envelope;
+  DB.envelopes[envelope.envelopeId] = envelope;
   saveDB();
 };
 
 export const markEnvelopeComplete = (envelopeId: string): void => {
-  DB[envelopeId].status = 'COMPLETE';
+  DB.envelopes[envelopeId].status = 'COMPLETE';
   saveDB();
 };
 
 export const markSignatureComplete = (envelopeId: string, email: string): void => {
-  const changedSignature = DB[envelopeId].signatures.find(
+  const changedSignature = DB.envelopes[envelopeId].signatures.find(
     (signature) => signature.user.email === email
   );
   if (changedSignature) {
@@ -32,3 +36,12 @@ export const markSignatureComplete = (envelopeId: string, email: string): void =
   }
   console.error(`User ${email} doesn't have a signature on ${envelopeId}`);
 };
+
+export const saveUserUUID = (UUID: string, email: string): void => {
+  DB.users[UUID] = email;
+  saveDB();
+};
+
+export const getUUIDEmail = (UUID: string): string => {
+  return DB.users[UUID];
+}

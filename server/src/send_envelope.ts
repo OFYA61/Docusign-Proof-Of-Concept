@@ -1,20 +1,23 @@
 import docusign_esign from 'docusign-esign';
+import { v4 as UUID } from 'uuid';
 import { ensureAccessToken, ensureAccount } from './docusign_token_utils';
 import { docusignClient } from './docusign_client';
 import { User } from './types';
+import { saveUserUUID } from './db';
 
 const docusign = docusign_esign as any;
 
 export const makeEnvelope = (
   title: string,
   usersToSign: User[],
+  products: string[],
   usersToCC: User[] = []
 ): docusign_esign.EnvelopeDefinition => {
   const envelopeDefinition = new docusign.EnvelopeDefinition();
   envelopeDefinition.emailSubject = title;
 
   const doc1 = new docusign.Document();
-  const doc1b64 = Buffer.from(htmlDocument(usersToSign, usersToCC)).toString('base64');
+  const doc1b64 = Buffer.from(htmlDocument(usersToSign, products, usersToCC)).toString('base64');
   doc1.documentBase64 = doc1b64;
   doc1.name = 'Order acknowledgement';
   doc1.fileExtension = 'html';
@@ -24,23 +27,29 @@ export const makeEnvelope = (
 
   const CCs: any[] = [];
   for (const user of usersToCC) {
+    const userUUID = UUID();
     const cc = new docusign.CarbonCopy();
     cc.email = user.email;
     cc.name = user.name;
     cc.routingOrder = (usersToSign.length + 1).toString();
-    cc.recipientId = user.email;
+    cc.recipientId = userUUID;
+
+    saveUserUUID(userUUID, user.email);
 
     CCs.push(cc);
   }
 
   const signers: any[] = [];
   for (const [index, user] of usersToSign.entries()) {
+    const userUUID = UUID();
     const signer = docusign.Signer.constructFromObject({
       email: user.email,
       name: user.name,
-      recipientId: user.email,
+      recipientId: userUUID,
       routingOrder: index + 1,
     });
+
+    saveUserUUID(userUUID, user.email);
 
     const signHere = docusign.SignHere.constructFromObject({
       anchorString: user.anchor,
@@ -71,6 +80,7 @@ export const makeEnvelope = (
 export const sendEnvelope = async (
   title: string,
   usersToSign: User[],
+  products: string[],
   usersToCC: User[] = []
 ): Promise<docusign_esign.EnvelopeSummary> => {
   const { accountId, basePath } = await ensureAccount();
@@ -79,7 +89,7 @@ export const sendEnvelope = async (
   dsApiClient.addDefaultHeader('Authorization', 'Bearer ' + (await ensureAccessToken()));
   const envelopesApi = new docusign.EnvelopesApi(dsApiClient);
 
-  const envelope = makeEnvelope(title, usersToSign, usersToCC);
+  const envelope = makeEnvelope(title, usersToSign, products, usersToCC);
 
   const results = await envelopesApi.createEnvelope(accountId, {
     envelopeDefinition: envelope,
@@ -87,7 +97,11 @@ export const sendEnvelope = async (
   return results;
 };
 
-function htmlDocument(usersToSign: User[], usersToCC: User[]): string {
+const htmlDocument = (
+  usersToSign: User[],
+  products: string[],
+  usersToCC: User[]
+): string => {
   const docStart = `
     <!DOCTYPE html>
     <html>
@@ -109,7 +123,8 @@ function htmlDocument(usersToSign: User[], usersToCC: User[]): string {
   Dessert bear claw chocolate cake gummies lollipop sugar plum ice cream gummies cheesecake.
         </p>
         <!-- Note the anchor tag for the signature field is in white. -->`;
-  const docMid = usersToSign
+  const docProducts = '<ul>' + products.map(product => `<li>${product}</li>`) + '</ul>';
+  const docSigners = usersToSign
     .map(
       (user) => `
         <h3 style="margin-top:3em;">Agreed: <span style="color:white;">${user.anchor}/</span></h3>
@@ -120,5 +135,5 @@ function htmlDocument(usersToSign: User[], usersToCC: User[]): string {
         </body>
     </html>
   `;
-  return docStart + docMid + docEnd;
+  return docStart + docProducts + docSigners + docEnd;
 }
