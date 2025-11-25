@@ -86,12 +86,10 @@ app.post('/webhook/docusign',
     req.on('end', () => {
       const rawBody = Buffer.concat(data);
 
-      // Compute HMAC
       const hmac = crypto.createHmac('sha256', DOCUSIGN_CONNECT_HMAC_KEY);
       hmac.update(rawBody);
       const bodyHash = hmac.digest('base64');
 
-      // Get signature from header
       const docuSignSignature = req.header('x-docusign-signature-1');
       if (!docuSignSignature) {
         console.log('Missing signature');
@@ -99,7 +97,6 @@ app.post('/webhook/docusign',
         return;
       }
 
-      // Constant-time comparison is safer to avoid timing attacks
       const isValid = crypto.timingSafeEqual(
         Buffer.from(bodyHash),
         Buffer.from(docuSignSignature)
