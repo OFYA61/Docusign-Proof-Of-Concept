@@ -1,6 +1,7 @@
 import express from 'express';
 import crypto from 'crypto';
 import docusign from 'docusign-esign';
+import cors from 'cors';
 import { makeEnvelope, sendEnvelope } from './send_envelope';
 import { Envelope, Signature, User } from './types';
 import { addEnvelope, DB, initDB } from './db';
@@ -11,6 +12,8 @@ import { ensureAccessToken, ensureAccount } from './docusign_token_utils';
 
 const port = 3000;
 const app = express();
+app.use(cors());
+
 
 app.get('/', async (_req, res) => {
   res.send('Poggers');
