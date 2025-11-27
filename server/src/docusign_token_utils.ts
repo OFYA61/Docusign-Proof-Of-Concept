@@ -16,8 +16,6 @@ export const ensureAccessToken = async (): Promise<string> => {
   if (!isAccessTokenValid()) {
     console.log('Requesting access token from Docusign');
 
-    console.log(DOCUSIGN_INTEGRATION_KEY);
-    console.log(DOCUSIGN_USER_ID);
     const result = await docusignClient.requestJWTUserToken(
       DOCUSIGN_INTEGRATION_KEY,
       DOCUSIGN_USER_ID,

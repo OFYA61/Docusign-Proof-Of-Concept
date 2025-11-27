@@ -30,6 +30,38 @@
 
   fetchEnvelopeDetails();
 
+  let isDownloading = false;
+
+  async function downloadDocument() {
+    isDownloading = true;
+    errorMessage = "";
+
+    try {
+      const response = await fetch(
+        `http://localhost:3000/sent-envelopes/${envelopeId}/download-document`
+      );
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `envelope-${envelopeId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        const error = await response.json();
+        errorMessage = `Error: ${error.message || "Failed to download document"}`;
+      }
+    } catch (error) {
+      errorMessage = `Network error: ${error.message}`;
+    } finally {
+      isDownloading = false;
+    }
+  }
+
   function getStatusBadgeClass(status) {
     const statusMap = {
       PENDING: "bg-secondary",
@@ -76,6 +108,32 @@
           </svg>
         {/if}
         Refresh
+      </button>
+      <button
+        class="btn btn-success"
+        onclick={downloadDocument}
+        disabled={isDownloading}
+      >
+        {#if isDownloading}
+          <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+        {:else}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="currentColor"
+            class="bi bi-download me-1"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"
+            />
+            <path
+              d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"
+            />
+          </svg>
+        {/if}
+        Download PDF
       </button>
       <button
         class="btn btn-outline-secondary"

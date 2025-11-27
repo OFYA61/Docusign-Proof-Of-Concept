@@ -52,13 +52,13 @@ app.post('/send-envelope', express.json(), async (req, res) => {
 
   let envelopeResponse;
   try {
-    envelopeResponse = await sendEnvelope('Sign the bloody PDF m8', signerUsers, products, ccUsers);
+    envelopeResponse = await sendEnvelope('Hamza TEST || Sign the PDF', signerUsers, products, ccUsers);
   } catch (err) {
     console.error(
       'DocuSign error response:',
       (err as any).response && ((err as any).response.body || (err as any).response.data || (err as any).body)
     );
-    res.send(makeEnvelope('lkdjf', signerUsers, products, ccUsers)).status(400);//.send(await makeEnvelope('some title', signerUsers, products, ccUsers));
+    res.send(makeEnvelope('lkdjf', signerUsers, products, ccUsers)).status(400);
     return;
   }
 
