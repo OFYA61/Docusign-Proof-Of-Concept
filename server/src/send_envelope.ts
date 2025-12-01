@@ -6,6 +6,7 @@ import { User } from './types';
 import { saveUserUUID } from './db';
 
 const docusign = docusign_esign as any;
+const POI_ANCHOR_STRING = '**POI_ANCHOR_STRING**';
 
 export const makeEnvelope = (
   title: string,
@@ -58,8 +59,16 @@ export const makeEnvelope = (
       anchorXOffset: '20',
     });
 
+    const poiSignHere = docusign.SignHere.constructFromObject({
+      anchorString: POI_ANCHOR_STRING,
+      anchorYOffset: '10',
+      anchorUnits: 'pixels',
+      anchorXOffset: '20',
+      optional: 'true'
+    });
+
     const signerTabs = docusign.Tabs.constructFromObject({
-      signHereTabs: [signHere],
+      signHereTabs: [signHere, poiSignHere],
     });
     signer.tabs = signerTabs;
 
@@ -131,9 +140,11 @@ const htmlDocument = (
   `
     )
     .join('\n');
+  const docPoiSignature =
+    `<h3 style="margin-top: 3em; ">POI Signature: <span style="color: white;"> ${POI_ANCHOR_STRING}/</span></h3>`;
   const docEnd = `
         </body>
     </html>
   `;
-  return docStart + docProducts + docSigners + docEnd;
+  return docStart + docProducts + docSigners + docPoiSignature + docEnd;
 }
