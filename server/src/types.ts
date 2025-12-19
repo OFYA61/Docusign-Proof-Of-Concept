@@ -10,6 +10,10 @@ export class User {
   get anchor(): string {
     return `**${this.email}**`;
   }
+
+  get poiAnchor(): string {
+    return `**POI**${this.email}**POI**`;
+  }
 }
 
 export type SignatureStatus = 'PENDING' | 'SENT' | 'DELIVERED' | 'OPENED' | 'COMPLETE';

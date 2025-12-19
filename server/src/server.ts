@@ -93,6 +93,32 @@ app.get('/sent-envelopes/:envelopeId/download-document', async (req, res) => {
   res.send(results);
 });
 
+app.get('/sent-envelopes/:envelopeId/sign-tabs-status', async (req, res) => {
+  const envelopeId = req.params.envelopeId;
+  const { accountId, basePath } = await ensureAccount();
+  const dsApiClient = docusignClient;
+  dsApiClient.setBasePath(basePath);
+  dsApiClient.addDefaultHeader('Authorization', 'Bearer ' + (await ensureAccessToken()));
+  let envelopesApi = new docusign.EnvelopesApi(dsApiClient);
+  let results: any = {};
+  try {
+    const recipients = await envelopesApi.listRecipients(accountId, envelopeId);
+    for (const signer of recipients.signers || []) {
+      const tabsResult = await envelopesApi.listTabs(accountId, envelopeId, signer.recipientId || "");
+      results[signer.email || ""] = [
+        (tabsResult.signHereTabs || []).map((tr) => `${tr.anchorString} ${tr.status || "NOT SIGNED"}`)
+      ];
+    }
+  } catch (e) {
+    console.log(e);
+    res.send(e).status(400);
+    return;
+  }
+
+
+  res.send(results).status(200);
+});
+
 app.post('/webhook/docusign',
   (
     req,

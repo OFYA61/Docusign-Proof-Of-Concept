@@ -6,7 +6,6 @@ import { User } from './types';
 import { saveUserUUID } from './db';
 
 const docusign = docusign_esign as any;
-const POI_ANCHOR_STRING = '**POI_ANCHOR_STRING**';
 
 export const makeEnvelope = (
   title: string,
@@ -16,6 +15,7 @@ export const makeEnvelope = (
 ): docusign_esign.EnvelopeDefinition => {
   const envelopeDefinition = new docusign.EnvelopeDefinition();
   envelopeDefinition.emailSubject = title;
+  envelopeDefinition.emailBlurb = ("This is a custom message for the email body for emails: " + usersToSign.map((user) => user.email).join(' ')).trimEnd() + '.';
 
   const doc1 = new docusign.Document();
   const doc1b64 = Buffer.from(htmlDocument(usersToSign, products, usersToCC)).toString('base64');
@@ -60,7 +60,7 @@ export const makeEnvelope = (
     });
 
     const poiSignHere = docusign.SignHere.constructFromObject({
-      anchorString: POI_ANCHOR_STRING,
+      anchorString: user.poiAnchor,
       anchorYOffset: '10',
       anchorUnits: 'pixels',
       anchorXOffset: '20',
@@ -140,8 +140,12 @@ const htmlDocument = (
   `
     )
     .join('\n');
-  const docPoiSignature =
-    `<h3 style="margin-top: 3em; ">POI Signature: <span style="color: white;"> ${POI_ANCHOR_STRING}/</span></h3>`;
+  const docPoiSignature = usersToSign
+    .map(
+      (user) => `
+        <h3 style="margin-top:3em;">Poi signature for ${user.name}: <span style="color:white;">${user.poiAnchor}/</span></h3>`
+    )
+    .join('\n');
   const docEnd = `
         </body>
     </html>
