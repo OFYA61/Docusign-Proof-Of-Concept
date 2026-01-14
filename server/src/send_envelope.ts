@@ -83,6 +83,16 @@ export const makeEnvelope = (
 
   envelopeDefinition.status = 'sent';
 
+  envelopeDefinition.customFields = {
+    textCustomFields: [
+      {
+        name: 'PORTAL_ID',
+        value: '1453',
+        show: 'false' // if true, appears to signers on cert; false = hidden
+      }
+    ]
+  };
+
   return envelopeDefinition;
 };
 

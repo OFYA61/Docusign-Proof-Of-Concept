@@ -119,6 +119,27 @@ app.get('/sent-envelopes/:envelopeId/sign-tabs-status', async (req, res) => {
   res.send(results).status(200);
 });
 
+app.get('/sent-envelopes/:envelopeId/custom-fields', async (req, res) => {
+  const envelopeId = req.params.envelopeId;
+  const { accountId, basePath } = await ensureAccount();
+  const dsApiClient = docusignClient;
+  dsApiClient.setBasePath(basePath);
+  dsApiClient.addDefaultHeader('Authorization', 'Bearer ' + (await ensureAccessToken()));
+  let envelopesApi = new docusign.EnvelopesApi(dsApiClient);
+  let results: any = {};
+  try {
+    const customFields = await envelopesApi.listCustomFields(accountId, envelopeId);
+    res.send(customFields)
+  } catch (e) {
+    console.log(e);
+    res.send(e).status(400);
+    return;
+  }
+
+
+  res.send(results).status(200);
+});
+
 app.post('/webhook/docusign',
   (
     req,
